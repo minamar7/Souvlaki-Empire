@@ -1,0 +1,29 @@
+# [[ Unity Target ]]
+/[L|l]ibrary/
+/[T|t]emp/
+/[O|o]bj/
+/[B|b]uild/
+/[B|b]uilds/
+/[L|l]ogs/
+/[U|u]nityConfiguration.gen.txt
+
+# [[ Memory Dumps ]]
+外观
+*.log
+*.crash
+
+# [[ OS generated files ]]
+.DS_Store
+Thumbs.db
+
+# [[ IDE - VS/VSCode/Rider ]]
+/.vs/
+/*.sln
+/*.csproj
+/*.unityproj
+/*.suo
+/*.user
+/*.userprefs
+/*.pidb
+/*.ipch
+/.[R|r]ider*/
