@@ -62,7 +62,8 @@ namespace SouvlakiTycoon
         }
 
         /// <summary>
-        /// Χειροκίνητο ή αυτόματο πούλημα σουβλακίου όταν ο παίκτης ολοκληρώνει μια παραγγελία
+        /// Χειροκίνητο ή αυτόματο πούλημα σουβλακίου όταν ο παίκτης ολοκληρώνει μια παραγγελία.
+        /// Υπολογίζει αυτόματα το profit multiplier ανάλογα με την τρέχουσα χώρα/πόλη!
         /// </summary>
         public void SellSouvlaki(string recipeID)
         {
@@ -70,30 +71,45 @@ namespace SouvlakiTycoon
 
             if (RecipeManager.Instance != null)
             {
-                int price = RecipeManager.Instance.GetSellPrice(recipeID);
+                // Βασική τιμή συνταγής
+                int basePrice = RecipeManager.Instance.GetSellPrice(recipeID);
+                
+                // Πολλαπλασιαστής χώρας (αν υπάρχει LocationManager, αλλιώς 1.0f)
+                float locationMultiplier = 1.0f;
+                if (LocationManager.Instance != null)
+                {
+                    locationMultiplier = LocationManager.Instance.GetCurrentLocationMultiplier();
+                }
+
+                // Τελική στρογγυλοποιημένη τιμή χρυσού
+                int finalPrice = Mathf.RoundToInt(basePrice * locationMultiplier);
                 
                 if (GameProgressionManager.Instance != null)
                 {
-                    GameProgressionManager.Instance.gold += price;
-                    moneyEarnedToday += price;
+                    GameProgressionManager.Instance.gold += finalPrice;
+                    moneyEarnedToday += finalPrice;
                     souvlakisSoldToday++;
                     
-                    Debug.Log($"Πουλήθηκε {recipeID} για {price} χρυσά!");
+                    Debug.Log($"Πουλήθηκε {recipeID} στην τρέχουσα τοποθεσία (x{locationMultiplier}) για {finalPrice} χρυσά!");
                 }
             }
         }
 
         private void HandleStaffAutomation()
         {
-            // Αν υπάρχει StaffManager και έχουμε προσλάβει Delivery, παράγονται τυχαίες αυτόματες πωλήσεις
-            if (StaffManager.Instance != null)
+            // Ασφαλής έλεγχος αν υπάρχει StaffManager και αν το roster έχει γεμίσει
+            if (StaffManager.Instance != null && StaffManager.Instance.availableStaff != null)
             {
-                float deliveryBonus = StaffManager.Instance.availableStaff.Find(s => s.staffID == "Delivery_1").isHired ? 1f : 0f;
+                var deliveryStaff = StaffManager.Instance.availableStaff.Find(s => s.staffID == "Delivery_1");
                 
-                // 1% πιθανότητα ανά frame να γίνει αυτόματη πώληση αν υπάρχει Delivery
-                if (deliveryBonus > 0 && Random.value < 0.01f)
+                // Αν βρεθεί ο διανομέας και είναι προσληφθείς
+                if (deliveryStaff != null && deliveryStaff.isHired)
                 {
-                    SellSouvlaki("Souvlaki_Wrap");
+                    // 1% πιθανότητα ανά frame να γίνει αυτόματη πώληση standard wrap λόγω delivery
+                    if (Random.value < 0.01f)
+                    {
+                        SellSouvlaki("Souvlaki_Wrap");
+                    }
                 }
             }
         }
