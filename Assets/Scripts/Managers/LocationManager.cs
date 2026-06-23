@@ -11,11 +11,11 @@ namespace SouvlakiTycoon
         [System.Serializable]
         public class Location
         {
-            public string locationID;       // "Athens", "NewYork", "Paris", "Tokyo"
-            public string bannerTitleKey;   // Key για το αριστερό banner (π.χ. "ATHENS_1985", "NEW_YORK_GLOBAL")
-            public Sprite backgroundSprite; // Η φωτογραφία/background της συγκεκριμένης πόλης
-            public int unlockLevelRequired; // Σε ποιο επίπεδο ξεκλειδώνει η πόλη
-            public float profitMultiplier = 1.0f; // Έξτρα κέρδος λόγω ακριβότερης αγοράς εξωτερικού!
+            public string locationID;       // "Athens", "NewYork", "Paris", "London", "Tokyo", "Sydney", "Rome", "Dubai", "Rio"
+            public string bannerTitleKey;   // Key για το αριστερό banner
+            public Sprite backgroundSprite; // Η φωτογραφία/background της πόλης
+            public int unlockLevelRequired; // Σε ποιο επίπεδο ξεκλειδώνει
+            public float profitMultiplier = 1.0f; // Πολλαπλασιατής κέρδους εξωτερικού
         }
 
         [Header("Location Settings")]
@@ -27,7 +27,7 @@ namespace SouvlakiTycoon
         [SerializeField] private Image backgroundImageDisplay;
         
         [Header("Banner Reference")]
-        [Tooltip("Σύρε εδώ το LocalizedTextComponent του Top-Left Banner για να αλλάζει το όνομα της πόλης.")]
+        [Tooltip("Σύρε εδώ το LocalizedTextComponent του Top-Left Banner.")]
         [SerializeField] private LocalizedTextComponent bannerCityText;
 
         private void Awake()
@@ -36,6 +36,7 @@ namespace SouvlakiTycoon
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                InitializeDefaultLocations();
                 LoadLocationProgress();
             }
             else
@@ -49,59 +50,59 @@ namespace SouvlakiTycoon
             UpdateLocationUI();
         }
 
-        /// <summary>
-        /// Μεταφέρει τον παίκτη στην επόμενη πόλη αν πληροί τις προϋποθέσεις επιπέδου
-        /// </summary>
+        private void InitializeDefaultLocations()
+        {
+            // Αν η λίστα είναι άδεια στον Inspector, τη γεμίζουμε με τη σωστή σειρά εξέλιξης (Progression)
+            if (locations.Count == 0)
+            {
+                locations.Add(new Location { locationID = "Athens", bannerTitleKey = "ATHENS_1985", unlockLevelRequired = 1, profitMultiplier = 1.0f });
+                locations.Add(new Location { locationID = "NewYork", bannerTitleKey = "NEW_YORK_GLOBAL", unlockLevelRequired = 5, profitMultiplier = 1.5f });
+                locations.Add(new Location { locationID = "Paris", bannerTitleKey = "PARIS_GLOBAL", unlockLevelRequired = 12, profitMultiplier = 2.0f });
+                locations.Add(new Location { locationID = "London", bannerTitleKey = "LONDON_GLOBAL", unlockLevelRequired = 20, profitMultiplier = 2.5f });
+                locations.Add(new Location { locationID = "Tokyo", bannerTitleKey = "TOKYO_GLOBAL", unlockLevelRequired = 30, profitMultiplier = 3.5f });
+                locations.Add(new Location { locationID = "Sydney", bannerTitleKey = "SYDNEY_GLOBAL", unlockLevelRequired = 40, profitMultiplier = 4.5f });
+                locations.Add(new Location { locationID = "Rome", bannerTitleKey = "ROME_GLOBAL", unlockLevelRequired = 50, profitMultiplier = 5.5f });
+                locations.Add(new Location { locationID = "Dubai", bannerTitleKey = "DUBAI_GLOBAL", unlockLevelRequired = 65, profitMultiplier = 7.0f });
+                locations.Add(new Location { locationID = "Rio", bannerTitleKey = "RIO_GLOBAL", unlockLevelRequired = 80, profitMultiplier = 10.0f });
+            }
+        }
+
         public void TravelToLocation(int locationIndex)
         {
             if (locationIndex < 0 || locationIndex >= locations.Count) return;
 
-            // Έλεγχος αν ο παίκτης έχει το απαιτούμενο level (από το GameManager / Progression)
-            int playerLevel = 1; 
-            if (GameProgressionManager.Instance != null)
-            {
-                // Υποθέτουμε ότι το level βασίζεται στις ημέρες ή την γενική πρόοδο
-                playerLevel = PlayerPrefs.GetInt("PlayerLevel", 1); 
-            }
+            int playerLevel = PlayerPrefs.GetInt("PlayerLevel", 1); 
 
             if (playerLevel >= locations[locationIndex].unlockLevelRequired)
             {
                 currentLocationIndex = locationIndex;
                 SaveLocationProgress();
                 UpdateLocationUI();
-                Debug.Log($"Καλώς ήρθατε στο {locations[locationIndex].locationID}!");
+                Debug.Log($"Ταξίδι στο: {locations[locationIndex].locationID}!");
             }
             else
             {
-                Debug.Log("Δεν έχεις φτάσει ακόμα στο απαιτούμενο επίπεδο για αυτή την πόλη!");
+                Debug.Log("Κλειδωμένη περιοχή! Χρειάζεσαι μεγαλύτερο Level.");
             }
         }
 
-        /// <summary>
-        /// Αλλάζει τη φωτογραφία φόντου και το κείμενο του banner live στο UI
-        /// </summary>
         public void UpdateLocationUI()
         {
             if (locations.Count == 0 || currentLocationIndex >= locations.Count) return;
 
             Location currentLoc = locations[currentLocationIndex];
 
-            // Αλλαγή φωτογραφίας πόλης
             if (backgroundImageDisplay != null && currentLoc.backgroundSprite != null)
             {
                 backgroundImageDisplay.sprite = currentLoc.backgroundSprite;
             }
 
-            // Αλλαγή κειμένου στο Banner (Athens, New York, κλπ.)
             if (bannerCityText != null)
             {
                 bannerCityText.SetKey(currentLoc.bannerTitleKey);
             }
         }
 
-        /// <summary>
-        /// Επιστρέφει τον πολλαπλασιαστή κέρδους της τρέχουσας πόλης για να επηρεάζει τις πωλήσεις
-        /// </summary>
         public float GetCurrentLocationMultiplier()
         {
             if (locations.Count == 0) return 1.0f;
