@@ -10,10 +10,16 @@ namespace SouvlakiTycoon
         public string localizationKey;
 
         private Text textComponent;
+        private string currentDynamicSuffix = "";
+        private string currentDynamicPrefix = "";
+
+        void Awake()
+        {
+            textComponent = GetComponent<Text>();
+        }
 
         void Start()
         {
-            textComponent = GetComponent<Text>();
             UpdateText();
         }
 
@@ -22,14 +28,24 @@ namespace SouvlakiTycoon
             UpdateText();
         }
 
+        // Απλή ενημέρωση κειμένου (για σταθερά μενού όπως SHOP, UPGRADES)
         public void UpdateText()
         {
             if (textComponent == null) textComponent = GetComponent<Text>();
             
             if (LocalizationManager.Instance != null && !string.IsNullOrEmpty(localizationKey))
             {
-                textComponent.text = LocalizationManager.Instance.GetTranslatedValue(localizationKey);
+                string baseTranslation = LocalizationManager.Instance.GetTranslatedValue(localizationKey);
+                textComponent.text = $"{currentDynamicPrefix}{baseTranslation}{currentDynamicSuffix}";
             }
+        }
+
+        // Premium λειτουργία για δυναμικά κείμενα (π.χ. DAY + " " + 365)
+        public void UpdateTextWithDynamicValue(string prefix, string suffix)
+        {
+            currentDynamicPrefix = prefix;
+            currentDynamicSuffix = suffix;
+            UpdateText();
         }
     }
 }
