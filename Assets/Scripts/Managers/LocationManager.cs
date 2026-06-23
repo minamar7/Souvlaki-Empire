@@ -11,23 +11,24 @@ namespace SouvlakiTycoon
         [System.Serializable]
         public class Location
         {
-            public string locationID;       // "Athens", "NewYork", "Paris", "London", "Tokyo", "Sydney", "Rome", "Dubai", "Rio"
-            public string bannerTitleKey;   // Key για το αριστερό banner
-            public Sprite backgroundSprite; // Η φωτογραφία/background της πόλης
-            public int unlockLevelRequired; // Σε ποιο επίπεδο ξεκλειδώνει
-            public float profitMultiplier = 1.0f; // Πολλαπλασιατής κέρδους εξωτερικού
+            public string locationID;             // "Athens", "NewYork", "Paris", "London", "Tokyo", "Sydney", "Rome", "Dubai", "Rio"
+            public string bannerTitleKey;         // Key για το LocalizedTextComponent του Banner
+            public Sprite backgroundSprite;       // Το φόντο της εκάστοτε πόλης
+            public int unlockLevelRequired;       // Απαιτούμενο επίπεδο παίκτη για ξεκλείδωμα
+            public float profitMultiplier = 1.0f; // Πολλαπλασιατής εσόδων λόγω τοποθεσίας
         }
 
-        [Header("Location Settings")]
+        [Header("Location Configuration")]
+        [Tooltip("Μπορείς να προσθέσεις ή να επεξεργαστείς τις πόλεις και τα Sprites τους απευθείας από τον Inspector.")]
         public List<Location> locations = new List<Location>();
         public int currentLocationIndex = 0;
 
-        [Header("UI References")]
-        [Tooltip("Σύρε εδώ το Image Component του φόντου της σκηνής.")]
+        [Header("UI Render References")]
+        [Tooltip("Σύρε εδώ το UI Image Component που δείχνει το φόντο του παιχνιδιού.")]
         [SerializeField] private Image backgroundImageDisplay;
         
         [Header("Banner Reference")]
-        [Tooltip("Σύρε εδώ το LocalizedTextComponent του Top-Left Banner.")]
+        [Tooltip("Σύρε εδώ το LocalizedTextComponent του Top-Left Banner για να αλλάζει ο τίτλος της πόλης.")]
         [SerializeField] private LocalizedTextComponent bannerCityText;
 
         private void Awake()
@@ -36,6 +37,7 @@ namespace SouvlakiTycoon
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                
                 InitializeDefaultLocations();
                 LoadLocationProgress();
             }
@@ -50,9 +52,12 @@ namespace SouvlakiTycoon
             UpdateLocationUI();
         }
 
+        /// <summary>
+        /// Γεμίζει τη λίστα με τις default ρυθμίσεις αν είναι άδεια, 
+        /// χωρίς όμως να υπερκαλύπτει τις αλλαγές που κάνεις στον Inspector.
+        /// </summary>
         private void InitializeDefaultLocations()
         {
-            // Αν η λίστα είναι άδεια στον Inspector, τη γεμίζουμε με τη σωστή σειρά εξέλιξης (Progression)
             if (locations.Count == 0)
             {
                 locations.Add(new Location { locationID = "Athens", bannerTitleKey = "ATHENS_1985", unlockLevelRequired = 1, profitMultiplier = 1.0f });
@@ -67,10 +72,14 @@ namespace SouvlakiTycoon
             }
         }
 
+        /// <summary>
+        /// Διαχειρίζεται τη μετακίνηση/ταξίδι του παίκτη σε μια νέα πόλη
+        /// </summary>
         public void TravelToLocation(int locationIndex)
         {
             if (locationIndex < 0 || locationIndex >= locations.Count) return;
 
+            // Τραβάμε το τρέχον επίπεδο του παίκτη (χρησιμοποιώντας το progression save)
             int playerLevel = PlayerPrefs.GetInt("PlayerLevel", 1); 
 
             if (playerLevel >= locations[locationIndex].unlockLevelRequired)
@@ -78,34 +87,55 @@ namespace SouvlakiTycoon
                 currentLocationIndex = locationIndex;
                 SaveLocationProgress();
                 UpdateLocationUI();
-                Debug.Log($"Ταξίδι στο: {locations[locationIndex].locationID}!");
+                
+                // Αν υπάρχει GameManager, κάνουμε trigger μια ανανέωση της σκηνής ή των εσόδων
+                if (GameManager.Instance != null)
+                {
+                    Debug.Log($"[LocationManager]: Επιτυχές ταξίδι στο {locations[locationIndex].locationID}!");
+                }
             }
             else
             {
-                Debug.Log("Κλειδωμένη περιοχή! Χρειάζεσαι μεγαλύτερο Level.");
+                Debug.LogWarning($"[LocationManager]: Η περιοχή {locations[locationIndex].locationID} είναι κλειδωμένη! Απαιτείται Level {locations[locationIndex].unlockLevelRequired}.");
             }
         }
 
+        /// <summary>
+        /// Ενημερώνει live τα γραφικά στοιχεία και τα κείμενα στη σκηνή
+        /// </summary>
         public void UpdateLocationUI()
         {
             if (locations.Count == 0 || currentLocationIndex >= locations.Count) return;
 
             Location currentLoc = locations[currentLocationIndex];
 
-            if (backgroundImageDisplay != null && currentLoc.backgroundSprite != null)
+            // Αλλαγή του Sprite στο Background Image
+            if (backgroundImageDisplay != null)
             {
-                backgroundImageDisplay.sprite = currentLoc.backgroundSprite;
+                if (currentLoc.backgroundSprite != null)
+                {
+                    backgroundImageDisplay.sprite = currentLoc.backgroundSprite;
+                }
+                else
+                {
+                    Debug.LogWarning($"[LocationManager]: Λείπει το background sprite για την πόλη: {currentLoc.locationID}");
+                }
             }
 
+            // Αλλαγή του Localization Key στο UI Banner
             if (bannerCityText != null)
             {
                 bannerCityText.SetKey(currentLoc.bannerTitleKey);
             }
         }
 
+        /// <summary>
+        /// Επιστρέφει τον πολλαπλασιαστή κέρδους της τρέχουσας πόλης.
+        /// Χρησιμοποίησέ τον στο GameManager κατά τον υπολογισμό της τιμής πώλησης.
+        /// </summary>
         public float GetCurrentLocationMultiplier()
         {
-            if (locations.Count == 0) return 1.0f;
+            if (locations.Count == 0 || currentLocationIndex >= locations.Count) return 1.0f;
             return locations[currentLocationIndex].profitMultiplier;
         }
 
