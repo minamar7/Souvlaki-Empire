@@ -7,7 +7,7 @@ namespace SouvlakiTycoon
     {
         public static LocalizationManager Instance { get; private set; }
 
-        // Οι 10 γλώσσες βάσει των προδιαγραφών σου
+        // Οι 10 γλώσσες βάσει των προδιαγραφών σου (όπως στο Stay Safe Elite)
         public enum Language 
         { 
             English, Greek, German, French, Spanish, 
@@ -39,10 +39,13 @@ namespace SouvlakiTycoon
 
         private void InitializeTranslations()
         {
-            // --- ΤΙΤΛΟΙ ΠΡΟΟΔΟΥ (Top Left Banner) ---
-            AddTranslation("START_SMALL", "START SMALL", "ΞΕΚΙΝΑ ΤΑΠΕΙΝΑ", "KLEIN ANFANGEN", "COMMENCER PETIT", "EMPEZAR PEQUEÑO", "INIZΙΑ IN PICCOLO", "COMEÇAR PEQUENO", "НАЧНИ С ΜΑΛОΓΟ", "从小做起", "छोटे से शुरुआत");
+            // --- ΤΙΤΛΟΙ ΠΡΟΟΔΟΥ (Top Left Banner - Κατάσταση Καντίνας) ---
+            AddTranslation("START_SMALL", "START SMALL", "ΞΕΚΙΝΑ ΤΑΠΕΙΝΑ", "KLEIN ANFANGEN", "COMMENCER PETIT", "EMPEZAR PEQUEÑO", "INIZIA IN PICCOLO", "COMEÇAR PEQUENO", "НАЧНИ С МАЛОГО", "从小做起", "छोटे से शुरुआत");
             AddTranslation("ATHENS_1985", "ATHENS, 1985", "ΑΘΗΝΑ, 1985", "ATHEN, 1985", "ATHÈNES, 1985", "ATENAS, 1985", "ATENE, 1985", "ATENAS, 1985", "АФИНЫ, 1985", "雅典, 1985", "एथेंस, 1985");
-            AddTranslation("GLOBAL_SUCCESS", "GLOBAL SUCCESS!", "ΠΑΓΚΟΣΜΙΑ ΕΠΙΤΥΧΙΑ!", "WELTERFOLG!", "SUCCÈS MONDIAL!", "¡ÉXITO GLOBAL!", "SUCCESSO GLOBALE!", "SUCESSO GLOBAL!", "МИРОВОЙ УСПЕХ!", "全球 Αν功!", "वैश्विक सफलता!");
+            
+            // --- ΤΙΤΛΟΙ ΠΡΟΟΔΟΥ (Top Left Banner - Κατάσταση Αυτοκρατορίας) ---
+            AddTranslation("BUILD_UPGRADE", "BUILD & UPGRADE", "ΧΤΙΣΕ & ΑΝΑΒΑΘΜΙΣΕ", "BAUEN & VERBESSERN", "CONSTRUIRE & AMÉLIORER", "CONSTRUIR Y MEJORAR", "COSTRUISCI E MIGLIORA", "CONSTRUIR & MELHORAR", "СТРОЙ И УЛУЧШАЙ", "建造 & 升级", "बनाएं और अपग्रेड करें");
+            AddTranslation("GLOBAL_SUCCESS", "GLOBAL SUCCESS!", "ΠΑΓΚΟΣΜΙΑ ΕΠΙΤΥΧΙΑ!", "WELTERFOLG!", "SUCCÈS MONDIAL!", "¡ÉXITO GLOBAL!", "SUCCESSO GLOBALE!", "SUCESSO GLOBAL!", "МИРОВОЙ УСПЕХ!", "全球成功!", "वैश्विक सफलता!");
 
             // --- ΣΤΑΤΙΣΤΙΚΑ & UI (Top Bar) ---
             AddTranslation("DAY", "DAY", "ΗΜΕΡΑ", "TAG", "JOUR", "DÍA", "GIORNO", "DIA", "ДЕНЬ", "天", "दिन");
@@ -51,9 +54,9 @@ namespace SouvlakiTycoon
             AddTranslation("SHOP", "SHOP", "ΜΑΓΑΖΙ", "LADEN", "BOUTIQUE", "TIENDA", "NEGOZIO", "LOJA", "МАГАЗИН", "商店", "दुकान");
             AddTranslation("UPGRADES", "UPGRADES", "ΑΝΑΒΑΘΜΙΣΕΙΣ", "VERBESSERUNGEN", "AMÉLIORATIONS", "MEJORAS", "MIGLIORAMENTI", "MELHORIAS", "УЛУЧШЕНИЯ", "升级", "अपग्रेड");
             AddTranslation("STAFF", "STAFF", "ΠΡΟΣΩΠΙΚΟ", "PERSONAL", "PERSONNEL", "PERSONAL", "PERSONALE", "EQUIPE", "ПЕРСОНАЛ", "员工", "कर्मचारी");
-            AddTranslation("RECIPES", "RECIPES", "ΣΥΝΤΑΓΕΣ", "REZEPTE", "RECETTES", "RECETAS", "RICETTE", "RECEITAS", "РЕЦЕΠТЫ", "食谱", "व्यंजन विधि");
+            AddTranslation("RECIPES", "RECIPES", "ΣΥΝΤΑΓΕΣ", "REZEPTE", "RECETTES", "RECETAS", "RICETTE", "RECEITAS", "РЕЦЕПТЫ", "食谱", "व्यंजन विधि");
 
-            // --- ΔΕΞΙ ΠΑΝΕΛ (Gameplay Goals) ---
+            // --- ΔΕΞΙ ΠΑΝΕΛ (Gameplay Goals & Stats) ---
             AddTranslation("TODAYS_GOAL", "TODAY'S GOAL", "ΣΤΟΧΟΣ ΗΜΕΡΑΣ", "TAGESZIEL", "OBJECTIF DU JOUR", "OBJETIVO DE HOY", "OBIETTIVO DI OGGI", "META DE HOJE", "ЦЕЛЬ ДНЯ", "今日目标", "आज का लक्ष्य");
             AddTranslation("REWARD", "REWARD", "ΑΜΟΙΒΗ", "BELOHNUNG", "RÉCOMPENSE", "RECOMPENSA", "RICOMPENSA", "RECOMPENSA", "НАГРАДА", "奖励", "इनाम");
             AddTranslation("GLOBAL_RANK", "GLOBAL RANK", "ΠΑΓΚΟΣΜΙΑ ΚΑΤΑΤΑΞΗ", "WELTRANGLISTE", "CLASSEMENT MONDIAL", "RANG MUNDIAL", "CLASSIFICA GLOBALE", "CLASSIFICAÇÃO GLOBAL", "МИРОВОЙ РЕЙТИНГ", "全球排名", "वैश्विक रैंक");
@@ -69,7 +72,10 @@ namespace SouvlakiTycoon
             var dict = new Dictionary<Language, string>();
             for (int i = 0; i < translations.Length; i++)
             {
-                dict[(Language)i] = translations[i];
+                if (i < translations.Length)
+                {
+                    dict[(Language)i] = translations[i];
+                }
             }
             localizedText[key] = dict;
         }
@@ -92,7 +98,7 @@ namespace SouvlakiTycoon
 
         private void LoadLanguagePreference()
         {
-            // Default 0 = English
+            // Default 0 = English αν ξεκινάει για πρώτη φορά το app
             int savedLang = PlayerPrefs.GetInt("SelectedLanguage", 0);
             currentLanguage = (Language)savedLang;
             UpdateFlagVisual();
@@ -100,7 +106,7 @@ namespace SouvlakiTycoon
 
         private void UpdateFlagVisual()
         {
-            // Αν έχεις συνδέσει ένα Image component και έχεις βάλει τα sprites των σημαιών στον Inspector
+            // Αλλάζει αυτόματα τη σημαία πάνω δεξιά στην οθόνη ανάλογα με τη γλώσσα
             if (currentFlagImage != null && flagSprites != null && (int)currentLanguage < flagSprites.Length)
             {
                 currentFlagImage.sprite = flagSprites[(int)currentLanguage];
