@@ -232,4 +232,4 @@ namespace SouvlakiTycoon
             CalculateNextDayGoals();
         }
     }
-}
+} 
