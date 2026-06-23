@@ -6,68 +6,115 @@ namespace SouvlakiTycoon
 {
     public class GameUIController : MonoBehaviour
     {
+        [Header("Top Left Banner (Athens/Global)")]
+        [SerializeField] private LocalizedTextComponent bannerTitleLocalized;
+        [SerializeField] private LocalizedTextComponent bannerSubtitleLocalized;
+
         [Header("Top Bar UI Elements")]
-        [SerializeField] private Text dayText;
+        [SerializeField] private LocalizedTextComponent dayLocalizedText;
         [SerializeField] private Text satisfactionText;
         [SerializeField] private Text customerCountText;
         [SerializeField] private Text goldText;
         [SerializeField] private Text diamondText;
 
-        [Header("Side Menu Buttons")]
-        [SerializeField] private Button shopButton;
-        [SerializeField] private Button upgradesButton;
-        [SerializeField] private Button staffButton;
-        [SerializeField] private Button recipesButton;
+        [Header("Side Menu Buttons (Static Translations)")]
+        [SerializeField] private LocalizedTextComponent shopButtonText;
+        [SerializeField] private LocalizedTextComponent upgradesButtonText;
+        [SerializeField] private LocalizedTextComponent staffButtonText;
+        [SerializeField] private LocalizedTextComponent recipesButtonText;
 
         [Header("Right Board Panel")]
-        [SerializeField] private Text goalTitleText;
-        [SerializeField] private Text goalAmountText;
-        [SerializeField] private Text rewardAmountText;
-        [SerializeField] private Button playButton;
-        [SerializeField] private Text playButtonLevelText;
+        [SerializeField] private LocalizedTextComponent boardTitleLocalized; 
+        [SerializeField] private Text boardValueText; // Δείχνει το €150 ή το Global Rank #1
+        [SerializeField] private LocalizedTextComponent boardRewardLabelLocalized;
+        [SerializeField] private Text boardRewardValueText; // Δείχνει το €200 ή το €5,230
 
-        [Header("Pop-up Panels (For Navigation)")]
+        [Header("Play Button")]
+        [SerializeField] private LocalizedTextComponent playButtonLocalized;
+        [SerializeField] private Text playButtonLevelText; // Δείχνει το LEVEL 3
+
+        [Header("Pop-up Panels")]
         [SerializeField] private GameObject shopPanel;
         [SerializeField] private GameObject upgradesPanel;
         [SerializeField] private GameObject staffPanel;
         [SerializeField] private GameObject recipesPanel;
 
-        private void Awake()
+        private void Start()
         {
-            // Setup Listeners για τα αριστερά κουμπιά
-            shopButton.onClick.AddListener(() => TogglePanel(shopPanel));
-            upgradesButton.onClick.AddListener(() => TogglePanel(upgradesPanel));
-            staffButton.onClick.AddListener(() => TogglePanel(staffPanel));
-            recipesButton.onClick.AddListener(() => TogglePanel(recipesPanel));
+            // Αρχικό Setup για να σιγουρευτούμε ότι τα static μενού πήραν τα keys τους
+            if (shopButtonText != null) shopButtonText.localizationKey = "SHOP";
+            if (upgradesButtonText != null) upgradesButtonText.localizationKey = "UPGRADES";
+            if (staffButtonText != null) staffButtonText.localizationKey = "STAFF";
+            if (recipesButtonText != null) recipesButtonText.localizationKey = "RECIPES";
             
-            playButton.onClick.AddListener(OnPlayButtonPressed);
+            // Παράδειγμα αρχικού visualization με βάση το screenshot 1 (Athens 1985)
+            LoadAthensUiDemo();
         }
 
-        // Ενημερώνει τα UI στοιχεία με "Smooth" εφέ για τα νούμερα (όπως το Gold 15,750)
-        public void UpdateTopBar(int day, float satisfaction, int customers, int gold, int diamonds)
+        // Μέθοδος που φορτώνει το στήσιμο της Αθήνας (Screenshot 3379_4)
+        public void LoadAthensUiDemo()
         {
-            if (dayText != null) dayText.text = $"DAY {day}";
-            if (satisfactionText != null) satisfactionText.text = $"{satisfaction:F0}%";
-            if (customerCountText != null) customerCountText.text = customers.ToString();
-            if (diamondText != null) diamondText.text = diamonds.ToString();
+            if (bannerTitleLocalized != null) bannerTitleLocalized.localizationKey = "START_SMALL";
+            if (bannerSubtitleLocalized != null) bannerSubtitleLocalized.localizationKey = "ATHENS_1985";
             
-            // Κάνουμε animate το χρυσό για πιο "premium" αίσθηση
+            if (dayLocalizedText != null)
+            {
+                dayLocalizedText.localizationKey = "DAY";
+                dayLocalizedText.UpdateTextWithDynamicValue("", " 1"); // DAY 1
+            }
+
+            satisfactionText.text = "85%";
+            customerCountText.text = "12";
+            goldText.text = "120";
+            diamondText.text = "5";
+
+            if (boardTitleLocalized != null) boardTitleLocalized.localizationKey = "TODAYS_GOAL";
+            boardValueText.text = "€150";
+
+            if (boardRewardLabelLocalized != null) boardRewardLabelLocalized.localizationKey = "REWARD";
+            boardRewardValueText.text = "200";
+
+            if (playButtonLocalized != null) playButtonLocalized.localizationKey = "PLAY";
+            playButtonLevelText.text = "LEVEL 3";
+
+            LocalizationManager.Instance.UpdateAllLocalizedTexts();
+        }
+
+        // Μέθοδος που μεταμορφώνει το UI σε Global Empire (Screenshot 3380_4)
+        public void LoadGlobalEmpireUiDemo()
+        {
+            if (bannerTitleLocalized != null) bannerTitleLocalized.localizationKey = "BUILD_UPGRADE";
+            if (bannerSubtitleLocalized != null) bannerSubtitleLocalized.localizationKey = "GLOBAL_SUCCESS";
+
+            if (dayLocalizedText != null)
+            {
+                dayLocalizedText.localizationKey = "DAY";
+                dayLocalizedText.UpdateTextWithDynamicValue("", " 365"); // DAY 365
+            }
+
+            satisfactionText.text = "98%";
+            customerCountText.text = "128";
+            
             StopAllCoroutines();
-            StartCoroutine(AnimateGoldValue(gold));
-        }
+            StartCoroutine(AnimateGoldValue(15750));
+            diamondText.text = "250";
 
-        public void UpdateRightBoard(string cityTitle, int goalMoney, int rewardMoney, int currentLevel)
-        {
-            if (goalTitleText != null) goalTitleText.text = cityTitle;
-            if (goalAmountText != null) goalAmountText.text = $"€{goalMoney:N0}";
-            if (rewardAmountText != null) rewardAmountText.text = $"€{rewardMoney:N0}";
-            if (playButtonLevelText != null) playButtonLevelText.text = $"PLAY\nLEVEL {currentLevel}";
+            if (boardTitleLocalized != null) boardTitleLocalized.localizationKey = "GLOBAL_RANK";
+            boardValueText.text = "#1";
+
+            if (boardRewardLabelLocalized != null) boardRewardLabelLocalized.localizationKey = "DAILY_PROFIT";
+            boardRewardValueText.text = "€5,230";
+
+            if (playButtonLocalized != null) playButtonLocalized.localizationKey = "PLAY";
+            playButtonLevelText.text = "LEVEL 45";
+
+            LocalizationManager.Instance.UpdateAllLocalizedTexts();
         }
 
         private IEnumerator AnimateGoldValue(int targetGold)
         {
-            int startGold = int.Parse(goldText.text.Replace(",", ""));
-            float duration = 0.5f;
+            int startGold = 0;
+            float duration = 0.7f;
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -78,33 +125,6 @@ namespace SouvlakiTycoon
                 yield return null;
             }
             goldText.text = targetGold.ToString("N0");
-        }
-
-        // Διαχειρίζεται το άνοιγμα/κλείσιμο των panels με ασφάλεια
-        private void TogglePanel(GameObject targetPanel)
-        {
-            if (targetPanel == null) return;
-
-            // Κλείσιμο όλων των άλλων ανοιχτών pop-ups πρώτα
-            shopPanel.SetActive(false);
-            upgradesPanel.SetActive(false);
-            staffPanel.SetActive(false);
-            recipesPanel.SetActive(false);
-
-            // Toggle το επιλεγμένο
-            targetPanel.SetActive(!targetPanel.activeSelf);
-            
-            // Audio Cue ή Micro-vibration εδώ (προαιρετικά)
-        }
-
-        private void OnPlayButtonPressed()
-        {
-            Debug.Log("Starting Level Session... Spawning Customers!");
-            // Κλείνουμε τα μενού και ξεκινάει το gameplay loop της πόλης
-            shopPanel.SetActive(false);
-            upgradesPanel.SetActive(false);
-            staffPanel.SetActive(false);
-            recipesPanel.SetActive(false);
         }
     }
 }
